@@ -93,5 +93,5 @@ if st.button('Predict'):
     v2_data, v3_data = process_data(df)
     prediction = model.predict(v3_data)[0]
     confidence = model.predict_proba(v3_data)[0].max()
-    st.success('Prediction: ' + v3_predict_dict[prediction] + """
-               Confidence:""" + str(round(confidence*100, 2)) + '%')
+    st.success('Prediction: ' + v3_predict_dict[prediction] +
+               '\nConfidence ' + str(round(confidence*100, 2)) + '%')

@@ -78,7 +78,7 @@ model = XGBClassifier()
 model.load_model("v3_model.json")
 
 def predict_v3():
-    prediction = model.predict(X_log)
+    prediction = model.predict(X_log)[0]
     st.text('Prediction: ' + str(prediction))
 
 # Button

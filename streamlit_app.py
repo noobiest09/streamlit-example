@@ -1,42 +1,85 @@
-from collections import namedtuple
-import altair as alt
-import math
+# Preliminaries
+import numpy as np
 import pandas as pd
+
+# Model
+from xgboost import XGBClassifier
+
+# GUI
 import streamlit as st
 
 """
-# Welcome to Streamlit!
-
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:
-
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
-
-In the meantime, below is an example of what you can do with just a few lines of code:
+Resignation Model V3 With SHAP Explanation
 """
 
+# categorical options
+job_classes = ['Finance', 'Rank & File', 'BPO', 'Analyst', 'C-suite',
+       'Information Technology', 'Managerial', 'Specialist', 'Supervisor',
+       'Director', 'Team Leader', 'Head', 'Education', 'Human Resource',
+       'Unclassified Low Income', 'Minimum Wage Earners',
+       'Experienced Pay - Unclassified', 'Assistant', 'Senior Management']
 
-# =============================================================================
-# total_points = st.slider("Number of points in stupid spiral", 1, 5000, 2000)
-# num_turns = st.slider("Number of turns in spiral", 1, 100, 9)
-# 
-# Point = namedtuple('Point', 'x y')
-# data = []
-# 
-# points_per_turn = total_points / num_turns
-# 
-# for curr_point_num in range(total_points):
-#     curr_turn, i = divmod(curr_point_num, points_per_turn)
-#     angle = (curr_turn + 1) * 2 * math.pi * i / points_per_turn
-#     radius = curr_point_num / total_points
-#     x = radius * math.cos(angle)
-#     y = radius * math.sin(angle)
-#     data.append(Point(x, y))
-# 
-# st.altair_chart(alt.Chart(pd.DataFrame(data), height=500, width=500)
-#     .mark_circle(color='#0068c9', opacity=0.5)
-#     .encode(x='x:Q', y='y:Q'))
-# 
-# =============================================================================
+employment_stats = ['Regular', 'Fixed Term', 'Probationary', 'Project-Based']
 
-st.selectbox(label='Gender', options=['Male', 'Female'])
+# Input Data
+df = pd.DataFrame()
+df.loc[0, 'Gender'] = st.selectbox(label='Gender', options=['Male', 'Female'])
+df.loc[0, 'Employment Status'] = st.selectbox(label='Employment Status',
+                                       options=employment_stats)
+df.loc[0, 'Job Class'] = st.selectbox(label='Job Class', options=job_classes)
+df.loc[0, 'Age'] = st.number_input(label='Age', min_value=0, max_value=100)
+df.loc[0, 'Tenure'] = st.number_input(label='Tenure', min_value=0,
+                               max_value=100)
+df.loc[0, 'Salary'] = st.number_input(label='Salary', min_value=0,
+                                      max_value=100000)
+
+df = pd.get_dummies(df,columns=['Gender', 'Job Class', 'Employment Status'])
+
+# Create item for prediction
+features_list = ['Gender_Female',
+                 'Gender_Male',
+                 'Job Class_Analyst',
+                 'Job Class_Assistant',
+                 'Job Class_BPO',
+                 'Job Class_C-suite',
+                 'Job Class_Director',
+                 'Job Class_Education',
+                 'Job Class_Experienced Pay - Unclassified',
+                 'Job Class_Finance',
+                 'Job Class_Head',
+                 'Job Class_Human Resource',
+                 'Job Class_Information Technology',
+                 'Job Class_Managerial',
+                 'Job Class_Minimum Wage Earners',
+                 'Job Class_Rank & File',
+                 'Job Class_Senior Management',
+                 'Job Class_Specialist',
+                 'Job Class_Supervisor',
+                 'Job Class_Team Leader',
+                 'Job Class_Unclassified Low Income',
+                 'Employment Status_Fixed Term',
+                 'Employment Status_Probationary',
+                 'Employment Status_Project-Based',
+                 'Employment Status_Regular',
+                 'Salary',
+                 'Tenure (years)',
+                 'Age']
+
+X = pd.DataFrame({0: {feature: df.loc[0, feature] if (feature in df.columns)
+                      else 0 for feature in features_list}}).transpose()
+
+log_cols = ['Salary', 'Tenure (years)', 'Age']
+X_log = X.copy()
+X_log[log_cols] = X_log[log_cols].apply(lambda x: np.log(x+1))
+
+
+# Load Model
+model = XGBClassifier()
+model.load_model("v3_model.json")
+
+def predict_v3():
+    prediction = model.predict(X_log)
+    st.text('Prediction: ' + str(prediction))
+
+# Button
+st.button('Predict', key='predict_button', on_click=predict_v3)

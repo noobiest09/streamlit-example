@@ -1,6 +1,7 @@
 altair
 pandas
 streamlit
+sklearn
 xgboost
 shap
 numpy

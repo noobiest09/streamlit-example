@@ -21,21 +21,6 @@ job_classes = ['Finance', 'Rank & File', 'BPO', 'Analyst', 'C-suite',
 
 employment_stats = ['Regular', 'Fixed Term', 'Probationary', 'Project-Based']
 
-# Input Data
-df = pd.DataFrame()
-df.loc[0, 'Gender'] = st.selectbox(label='Gender', options=['Male', 'Female'])
-df.loc[0, 'Employment Status'] = st.selectbox(label='Employment Status',
-                                       options=employment_stats)
-df.loc[0, 'Job Class'] = st.selectbox(label='Job Class', options=job_classes)
-df.loc[0, 'Age'] = st.number_input(label='Age', min_value=0, max_value=100)
-df.loc[0, 'Tenure'] = st.number_input(label='Tenure', min_value=0,
-                               max_value=100)
-df.loc[0, 'Salary'] = st.number_input(label='Salary', min_value=0,
-                                      max_value=100000)
-
-df = pd.get_dummies(df,columns=['Gender', 'Job Class', 'Employment Status'])
-
-# Create item for prediction
 features_list = ['Gender_Female',
                  'Gender_Male',
                  'Job Class_Analyst',
@@ -65,21 +50,48 @@ features_list = ['Gender_Female',
                  'Tenure (years)',
                  'Age']
 
-X = pd.DataFrame({0: {feature: df.loc[0, feature] if (feature in df.columns)
-                      else 0 for feature in features_list}}).transpose()
-
 log_cols = ['Salary', 'Tenure (years)', 'Age']
-X_log = X.copy()
-X_log[log_cols] = X_log[log_cols].apply(lambda x: np.log(x+1))
+
+v3_predict_dict = {0: '< 3 Months',
+                   1: '3 - 6 Months',
+                   2: '6 - 9 Months',
+                   3: '9 - 12 Months',
+                   4: '>12 Months'
+                   }
+
+# Input Data
+df = pd.DataFrame()
+df.loc[0, 'Gender'] = st.selectbox(label='Gender', options=['Male', 'Female'])
+df.loc[0, 'Employment Status'] = st.selectbox(label='Employment Status',
+                                       options=employment_stats)
+df.loc[0, 'Job Class'] = st.selectbox(label='Job Class', options=job_classes)
+df.loc[0, 'Age'] = st.number_input(label='Age', min_value=0, max_value=100)
+df.loc[0, 'Tenure'] = st.number_input(label='Tenure', min_value=0,
+                               max_value=100)
+df.loc[0, 'Salary'] = st.number_input(label='Salary', min_value=0,
+                                      max_value=100000)
+
+# Create item for prediction
+def process_data(df):
+    df = pd.get_dummies(df,columns=['Gender', 'Job Class',
+                                    'Employment Status'])
+    
+    X = pd.DataFrame({0: {feature:
+                          df.loc[0, feature] if(feature in df.columns)
+                          else 0 for feature in features_list}}).transpose()
+    X_log = X.copy()
+    X_log[log_cols] = X_log[log_cols].apply(lambda x: np.log(x+1))
+    return X, X_log
 
 
 # Load Model
 model = XGBClassifier()
 model.load_model("v3_model.json")
 
-def predict_v3():
-    prediction = model.predict(X_log)[0]
-    st.text('Prediction: ' + str(prediction))
-
 # Button
-st.button('Predict', key='predict_button', on_click=predict_v3)
+if st.button('Predict'):
+    v2_data, v3_data = process_data(df)
+    prediction = model.predict(v3_data)[0]
+    confidence = model.predict_proba(v3_data)[0].max()
+    st.success('Prediction: ' + v3_predict_dict[prediction] + """
+               Confidence:""" + str(round(confidence*100, 2)) + '%')

@@ -9,7 +9,7 @@ from xgboost import XGBClassifier
 import streamlit as st
 
 """
-Resignation Model V3 With SHAP Explanation
+Resignation Model V2 & V3 With SHAP Explanation
 """
 
 # categorical options
@@ -56,7 +56,13 @@ v3_predict_dict = {0: '< 3 Months',
                    1: '3 - 6 Months',
                    2: '6 - 9 Months',
                    3: '9 - 12 Months',
-                   4: '>12 Months'
+                   4: '> 12 Months'
+                   }
+
+v2_predict_dict = {0: 'Passed',
+                   1: '< 3 Months',
+                   2: '3 - 6 Months',
+                   3: '> 6 Months'
                    }
 
 # Input Data
@@ -84,14 +90,31 @@ def process_data(df):
     return X, X_log
 
 
-# Load Model
-model = XGBClassifier()
-model.load_model("v3_model.json")
+# Load Models
+model_v3, model_v2_1, model_v2_2 = [XGBClassifier()]*3
+model_v3.load_model("v3_model.json")
+model_v2_1.load_model("xgb_model_v2_1.json")
+model_v2_2.load_model("xgb_model_v2_2.json")
 
 # Button
 if st.button('Predict'):
     v2_data, v3_data = process_data(df)
-    prediction = model.predict(v3_data)[0]
-    confidence = model.predict_proba(v3_data)[0].max()
-    st.success('Prediction: ' + v3_predict_dict[prediction] +
-               '\nConfidence ' + str(round(confidence*100, 2)) + '%')
+    
+    # V3 Output
+    prediction_v3 = model_v3.predict(v3_data)[0]
+    confidence_v3 = model_v3.predict_proba(v3_data)[0].max()
+    st.success('V3:  \nPrediction: ' + v3_predict_dict[prediction_v3] +
+               '  \nConfidence :' + str(round(confidence_v3*100, 1)) + '%')
+    
+    # V2 Output
+    prediction_v2_1 = model_v2_1.predict(v2_data)[0]
+    prediction_v2_2 = model_v2_2.predict(v2_data)[0]
+    prediction_v2 = (1 - prediction_v2_1) * prediction_v2_2
+    confidence_v2_1 = model_v2_1.predict_proba(v2_data)[0].max()
+    confidence_v2_2 = model_v2_2.predict_proba(v2_data)[0].max()
+    st.success('V2:  \nPrediction: ' + v2_predict_dict[prediction_v2] +
+               '  \nBinary Confidence :' + str(round(confidence_v2_1*100, 1)) +
+               '%' + ('' if prediction_v2_1 else '  \nBinned Confidence: ' +
+                      str(round(confidence_v2_2*100, 1)) + '%'))
+    
+    

@@ -139,23 +139,23 @@ if st.button('Predict'):
                '%' + ('' if prediction_v2_1 else '  \nBinned Probability: ' +
                       str(round(confidence_v2_2*100, 1)) + '%'))
     
-    if st.button('Show SHAP Plots'):
+    # if st.button('Show SHAP Plots'):
         
         # # Explainer values
-        # explainer_v2_1 = shap.Explainer(model_v2_1)
-        # explainer_v2_2 = shap.Explainer(model_v2_2)
-        # explainer_v3 = shap.Explainer(model_v3)
-        
-        # shap_values_local_1 = explainer_v2_1(v2_data)
-        # shap_values_local_2 = explainer_v2_2(v2_data)
-        # shap_values_local_3 = explainer_v3(v3_data)
-        
-        st.write('V3 SHAP Plot')
-        # st_shap(
-        #     shap.force_plot(base_value=explainer_v3.expected_value[prediction_v3],
-        #         shap_values=shap_values_local_3.values[0, :, prediction_v3],
-        #         feature_names=features_list,
-        #         out_names=v3_predict_dict[prediction_v3]
-        #         ), height=200, width=1000)
+    explainer_v2_1 = shap.Explainer(model_v2_1)
+    explainer_v2_2 = shap.Explainer(model_v2_2)
+    explainer_v3 = shap.Explainer(model_v3)
+    
+    shap_values_local_1 = explainer_v2_1(v2_data)
+    shap_values_local_2 = explainer_v2_2(v2_data)
+    shap_values_local_3 = explainer_v3(v3_data)
+    
+    st.write('V3 SHAP Plot')
+    st_shap(
+        shap.force_plot(base_value=explainer_v3.expected_value[prediction_v3],
+            shap_values=shap_values_local_3.values[0, :, prediction_v3],
+            feature_names=features_list,
+            out_names=v3_predict_dict[prediction_v3]
+            ), height=200, width=1000)
                 
 

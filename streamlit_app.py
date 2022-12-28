@@ -71,11 +71,12 @@ df.loc[0, 'Gender'] = st.selectbox(label='Gender', options=['Male', 'Female'])
 df.loc[0, 'Employment Status'] = st.selectbox(label='Employment Status',
                                        options=employment_stats)
 df.loc[0, 'Job Class'] = st.selectbox(label='Job Class', options=job_classes)
-df.loc[0, 'Age'] = st.number_input(label='Age', min_value=0, max_value=100)
+df.loc[0, 'Age'] = st.number_input(label='Age', min_value=0, max_value=100,
+                                   value=30)
 df.loc[0, 'Tenure'] = st.number_input(label='Tenure', min_value=0,
-                               max_value=100)
+                               max_value=100, value=5)
 df.loc[0, 'Salary'] = st.number_input(label='Salary', min_value=0,
-                                      max_value=100000)
+                                      max_value=100000, value=25000)
 
 # Create item for prediction
 def process_data(df):

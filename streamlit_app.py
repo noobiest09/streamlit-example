@@ -112,6 +112,8 @@ if st.button('Predict'):
     # V2 Output
     prediction_v2_1 = model_v2_1.predict(v2_data)[0]
     prediction_v2_2 = model_v2_2.predict(v2_data)[0]
+    st.scuccess('V2 Prediction 1: ' + str(prediction_v2_1))
+    st.scuccess('V2 Prediction 2: ' + str(prediction_v2_2))
     prediction_v2 = (1 - prediction_v2_1) * prediction_v2_2
     confidence_v2_1 = model_v2_1.predict_proba(v2_data)[0].max()
     confidence_v2_2 = model_v2_2.predict_proba(v2_data)[0].max()

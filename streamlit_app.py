@@ -67,16 +67,23 @@ v2_predict_dict = {0: 'Passed',
 
 # Input Data
 df = pd.DataFrame()
-df.loc[0, 'Gender'] = st.selectbox(label='Gender', options=['Male', 'Female'])
-df.loc[0, 'Employment Status'] = st.selectbox(label='Employment Status',
-                                       options=employment_stats)
-df.loc[0, 'Job Class'] = st.selectbox(label='Job Class', options=job_classes)
-df.loc[0, 'Age'] = st.number_input(label='Age', min_value=0, max_value=100,
-                                   value=30)
-df.loc[0, 'Tenure'] = st.number_input(label='Tenure', min_value=0,
-                               max_value=100, value=5)
-df.loc[0, 'Salary'] = st.number_input(label='Salary', min_value=0,
-                                      max_value=100000, value=25000)
+
+c1, c2 = st.columns(2)
+
+with c1:
+    df.loc[0, 'Gender'] = st.selectbox(label='Gender',
+                                       options=['Male', 'Female'])
+    df.loc[0, 'Employment Status'] = st.selectbox(label='Employment Status',
+                                           options=employment_stats)
+    df.loc[0, 'Job Class'] = st.selectbox(label='Job Class',
+                                          options=job_classes)
+with c2:
+    df.loc[0, 'Age'] = st.number_input(label='Age', min_value=0, max_value=100,
+                                       value=30)
+    df.loc[0, 'Tenure'] = st.number_input(label='Tenure', min_value=0,
+                                   max_value=100, value=5)
+    df.loc[0, 'Salary'] = st.number_input(label='Salary', min_value=0,
+                                          max_value=100000, value=25000)
 
 # Create item for prediction
 def process_data(df):
@@ -114,8 +121,6 @@ if st.button('Predict'):
     # V2 Output
     prediction_v2_1 = model_v2_1.predict(v2_data)[0]
     prediction_v2_2 = model_v2_2.predict(v2_data)[0]
-    st.success('V2 Prediction 1: ' + str(prediction_v2_1))
-    st.success('V2 Prediction 2: ' + str(prediction_v2_2))
     prediction_v2 = (1 - prediction_v2_1) * prediction_v2_2
     confidence_v2_1 = model_v2_1.predict_proba(v2_data)[0].max()
     confidence_v2_2 = model_v2_2.predict_proba(v2_data)[0].max()
@@ -123,7 +128,5 @@ if st.button('Predict'):
                '  \n--------------' +
                '  \nPrediction: ' + v2_predict_dict[prediction_v2] +
                '  \nBinary Confidence :' + str(round(confidence_v2_1*100, 1)) +
-               '%' + ('' if prediction_v2_1 else '  \nBinned Confidence: ' +
+               '%' + ('' if prediction_v2_1 else '  \nBinned Probability: ' +
                       str(round(confidence_v2_2*100, 1)) + '%'))
-    
-    

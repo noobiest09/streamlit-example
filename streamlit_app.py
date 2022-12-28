@@ -1,12 +1,14 @@
 # Preliminaries
 import numpy as np
 import pandas as pd
+import shap
 
 # Model
 from xgboost import XGBClassifier
 
 # GUI
 import streamlit as st
+from streamlit_shap import st_shap
 
 """
 Resignation Model V2 & V3 With SHAP Explanation
@@ -64,6 +66,12 @@ v2_predict_dict = {0: 'Passed',
                    2: '3 - 6 Months',
                    3: '> 6 Months'
                    }
+
+v2_binary_dict = {
+    0: 'Resigned',
+    1: 'Not Resigned',
+           }
+
 
 # Input Data
 df = pd.DataFrame()
@@ -124,9 +132,30 @@ if st.button('Predict'):
     prediction_v2 = (1 - prediction_v2_1) * prediction_v2_2
     confidence_v2_1 = model_v2_1.predict_proba(v2_data)[0].max()
     confidence_v2_2 = model_v2_2.predict_proba(v2_data)[0].max()
-    st.success('V2: Model' +
+    st.success('V2 Model:' +
                '  \n--------------' +
                '  \nPrediction: ' + v2_predict_dict[prediction_v2] +
                '  \nBinary Confidence :' + str(round(confidence_v2_1*100, 1)) +
                '%' + ('' if prediction_v2_1 else '  \nBinned Probability: ' +
                       str(round(confidence_v2_2*100, 1)) + '%'))
+    
+    if st.button('Show SHAP Plots'):
+        
+        # Explainer values
+        explainer_v2_1 = shap.Explainer(model_v2_1)
+        explainer_v2_2 = shap.Explainer(model_v2_2)
+        explainer_v3 = shap.Explainer(model_v3)
+        
+        shap_values_local_1 = explainer_v2_1(v2_data)
+        shap_values_local_2 = explainer_v2_2(v2_data)
+        shap_values_local_3 = explainer_v3(v3_data)
+        
+        st.text('V3 SHAP Plot')
+        st_shap(
+            shap.force_plot(base_value=explainer_v3.expected_value[prediction_v3],
+                shap_values=shap_values_local_3.values[0, :, prediction_v3],
+                feature_names=features_list,
+                out_names=v3_predict_dict[prediction_v3]
+                ), height=200, width=1000)
+                
+

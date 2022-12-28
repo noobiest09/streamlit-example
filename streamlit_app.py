@@ -92,7 +92,9 @@ def process_data(df):
 
 
 # Load Models
-model_v3, model_v2_1, model_v2_2 = [XGBClassifier()]*3
+model_v3 = XGBClassifier()
+model_v2_1 = XGBClassifier()
+model_v2_2 = XGBClassifier()
 model_v3.load_model("v3_model.json")
 model_v2_1.load_model("xgb_model_v2_1.json")
 model_v2_2.load_model("xgb_model_v2_2.json")

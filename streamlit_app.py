@@ -103,8 +103,10 @@ if st.button('Predict'):
     # V3 Output
     prediction_v3 = model_v3.predict(v3_data)[0]
     confidence_v3 = model_v3.predict_proba(v3_data)[0].max()
-    st.success('V3:  \nPrediction: ' + v3_predict_dict[prediction_v3] +
-               '  \nConfidence :' + str(round(confidence_v3*100, 1)) + '%')
+    st.success('V3 Model:' +
+               '  \n--------------'
+               '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
+               '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
     
     # V2 Output
     prediction_v2_1 = model_v2_1.predict(v2_data)[0]
@@ -112,7 +114,9 @@ if st.button('Predict'):
     prediction_v2 = (1 - prediction_v2_1) * prediction_v2_2
     confidence_v2_1 = model_v2_1.predict_proba(v2_data)[0].max()
     confidence_v2_2 = model_v2_2.predict_proba(v2_data)[0].max()
-    st.success('V2:  \nPrediction: ' + v2_predict_dict[prediction_v2] +
+    st.success('V2: Model' +
+               '  \n--------------' +
+               '  \nPrediction: ' + v2_predict_dict[prediction_v2] +
                '  \nBinary Confidence :' + str(round(confidence_v2_1*100, 1)) +
                '%' + ('' if prediction_v2_1 else '  \nBinned Confidence: ' +
                       str(round(confidence_v2_2*100, 1)) + '%'))

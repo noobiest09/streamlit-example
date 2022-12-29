@@ -172,6 +172,8 @@ with st.form("my_form"):
         
         # Make predictions
         make_predictions()
+        
+        feature_names = [name.replace('_', '\n') for name in features_list]
 
         # Explainer values
         with lzma.open('explainer_v2_1.xz', 'rb') as f:
@@ -193,7 +195,7 @@ with st.form("my_form"):
                     prediction_v2_2 - 1],
                 shap_values=shap_values_local_2.values[
                     0, :, prediction_v2_2 - 1],
-                feature_names=features_list,
+                feature_names=feature_names,
                 out_names=v2_predict_dict[prediction_v2_2],
                 matplotlib=True,
                 figsize=(22, 4)
@@ -209,7 +211,7 @@ with st.form("my_form"):
             shap.force_plot(
                 base_value=explainer_v2_1.expected_value,
                 shap_values=shap_values_local_1.values[0],
-                feature_names=features_list,
+                feature_names=feature_names,
                 out_names=v2_binary_dict[prediction_v2_1],
                 matplotlib=True,
                 figsize=(22, 4)
@@ -225,7 +227,7 @@ with st.form("my_form"):
         shap.force_plot(
             base_value=explainer_v3.expected_value[prediction_v3],
             shap_values=shap_values_local_3.values[0, :, prediction_v3],
-            feature_names=features_list,
+            feature_names=feature_names,
             out_names=v3_predict_dict[prediction_v3],
             matplotlib=True,
             figsize=(22, 4)

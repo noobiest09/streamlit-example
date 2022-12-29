@@ -17,31 +17,20 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # Caching methods for memory management
 
-
-def load_models():
+@st.cache(allow_output_mutation=True)
+def load_model(file_path):
     
     # Load Models
-    model_v3 = XGBClassifier()
-    model_v2_1 = XGBClassifier()
-    model_v2_2 = XGBClassifier()
-    model_v3.load_model("v3_model.json")
-    model_v2_1.load_model("xgb_model_v2_1.json")
-    model_v2_2.load_model("xgb_model_v2_2.json")
-    
-    return model_v2_1, model_v2_2, model_v3
+    model = XGBClassifier()
+    model.load_model(file_path)
+    return model
 
-@st.cache()
-def load_explainers():
-    
+@st.cache(allow_output_mutation=True)
+def load_explainer(file_path):
     # Load Explainers
-    with lzma.open('explainer_v2_1.xz', 'rb') as f:
-        explainer_v2_1 = pickle.load(f)
-    with lzma.open('explainer_v2_2.xz', 'rb') as f:
-        explainer_v2_2 = pickle.load(f)
-    with lzma.open('explainer_v3.xz', 'rb') as f:
-        explainer_v3 = pickle.load(f)
-    
-    return explainer_v2_1, explainer_v2_2, explainer_v3
+    with lzma.open(file_path, 'rb') as f:
+        explainer = pickle.load(f)
+    return explainer
 
 
 #### START OF APP ####
@@ -153,9 +142,15 @@ def make_predictions():
                '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
                '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
 
-# Loading models
-model_v2_1, model_v2_2, model_v3 = load_models()
-explainer_v2_1, explainer_v2_2, explainer_v3 = load_explainers()
+# Load Models
+model_v3 = load_model("v3_model.json")
+model_v2_1 = load_model("xgb_model_v2_1.json")
+model_v2_2 = load_model("xgb_model_v2_2.json")
+    
+# Load Explainers
+explainer_v2_1 = load_explainer('explainer_v2_1.xz')
+explainer_v2_2 = load_explainer('explainer_v2_2.xz')
+explainer_v3 = load_explainer('explainer_v3.xz')    
 
 # Input Data Storage
 df = pd.DataFrame()

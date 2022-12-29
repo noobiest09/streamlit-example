@@ -7,3 +7,5 @@ matplotlib
 shap
 numpy
 streamlit-shap
+lzma
+pickle

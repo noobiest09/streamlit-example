@@ -3,23 +3,28 @@ import numpy as np
 import pandas as pd
 import shap
 
+# File Management
+import lzma
+import pickle
+
 # Model
 from xgboost import XGBClassifier
 
 # GUI
 import streamlit as st
-from streamlit_shap import st_shap
+# from streamlit_shap import st_shap
+st.set_option('deprecation.showPyplotGlobalUse', False)
 
 """
 Resignation Model V2 & V3 With SHAP Explanation
 """
 
 # categorical options
-job_classes = ['Finance', 'Rank & File', 'BPO', 'Analyst', 'C-suite',
+job_classes = sorted(['Finance', 'Rank & File', 'BPO', 'Analyst', 'C-suite',
        'Information Technology', 'Managerial', 'Specialist', 'Supervisor',
        'Director', 'Team Leader', 'Head', 'Education', 'Human Resource',
        'Unclassified Low Income', 'Minimum Wage Earners',
-       'Experienced Pay - Unclassified', 'Assistant', 'Senior Management']
+       'Experienced Pay - Unclassified', 'Assistant', 'Senior Management'])
 
 employment_stats = ['Regular', 'Fixed Term', 'Probationary', 'Project-Based']
 
@@ -80,9 +85,12 @@ c1, c2 = st.columns(2)
 
 with c1:
     df.loc[0, 'Gender'] = st.selectbox(label='Gender',
-                                       options=['Male', 'Female'])
+                                       options=['Male', 'Female'],
+                                       index=1
+                                       )
     df.loc[0, 'Employment Status'] = st.selectbox(label='Employment Status',
-                                           options=employment_stats)
+                                                  options=employment_stats
+                                                  )
     df.loc[0, 'Job Class'] = st.selectbox(label='Job Class',
                                           options=job_classes)
 with c2:
@@ -115,16 +123,14 @@ model_v2_1.load_model("xgb_model_v2_1.json")
 model_v2_2.load_model("xgb_model_v2_2.json")
 
 # Button
-if st.button('Predict'):
+
+predict_button = st.button('Predict')
+
+if st.session_state.get('button') != True:
+    st.session_state['button'] = predict_button
+
+if st.session_state['button'] == True:
     v2_data, v3_data = process_data(df)
-    
-    # V3 Output
-    prediction_v3 = model_v3.predict(v3_data)[0]
-    confidence_v3 = model_v3.predict_proba(v3_data)[0].max()
-    st.success('V3 Model:' +
-               '  \n--------------'
-               '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
-               '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
     
     # V2 Output
     prediction_v2_1 = model_v2_1.predict(v2_data)[0]
@@ -135,27 +141,84 @@ if st.button('Predict'):
     st.success('V2 Model:' +
                '  \n--------------' +
                '  \nPrediction: ' + v2_predict_dict[prediction_v2] +
-               '  \nBinary Confidence :' + str(round(confidence_v2_1*100, 1)) +
+               '  \nBinary Confidence: ' + str(round(confidence_v2_1*100, 1)) +
                '%' + ('' if prediction_v2_1 else '  \nBinned Probability: ' +
                       str(round(confidence_v2_2*100, 1)) + '%'))
     
-    # if st.button('Show SHAP Plots'):
+    # V3 Output
+    prediction_v3 = model_v3.predict(v3_data)[0]
+    confidence_v3 = model_v3.predict_proba(v3_data)[0].max()
+    st.success('V3 Model:' +
+               '  \n--------------'
+               '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
+               '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
+
+    
+    if st.button('Show SHAP Plots'):
         
-        # # Explainer values
-    explainer_v2_1 = shap.Explainer(model_v2_1)
-    explainer_v2_2 = shap.Explainer(model_v2_2)
-    explainer_v3 = shap.Explainer(model_v3)
+        # Explainer values
+        # explainer_v2_1 = shap.Explainer(model_v2_1)
+        # explainer_v2_2 = shap.Explainer(model_v2_2)
+        # explainer_v3 = shap.Explainer(model_v3)
+        with lzma.open('explainer_v2_1.xz', 'rb') as f:
+            explainer_v2_1 = pickle.load(f)
+        with lzma.open('explainer_v2_2.xz', 'rb') as f:
+            explainer_v2_2 = pickle.load(f)
+        with lzma.open('explainer_v3.xz', 'rb') as f:
+            explainer_v3 = pickle.load(f)
+        
+
+        shap_values_local_1 = explainer_v2_1(v2_data)
+        shap_values_local_2 = explainer_v2_2(v2_data)
+        shap_values_local_3 = explainer_v3(v3_data)
+        
+        st.write('V2 SHAP Plot')
+        if prediction_v2_1 == 0:
+            shap.force_plot(
+                base_value=explainer_v2_2.expected_value[
+                    prediction_v2_2 - 1],
+                shap_values=shap_values_local_2.values[
+                    0, :, prediction_v2_2 - 1],
+                feature_names=features_list,
+                out_names=v2_predict_dict[prediction_v2_2],
+                matplotlib=True,
+                figsize=(22, 4)
+            )
+            st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
+            st.caption("Features in pink push the prediction towards the _" + 
+                       v2_binary_dict[prediction_v2_2] + "_ prediction. Blue bars drag the "
+                       "prediction away from the _" + v2_predict_dict[prediction_v2_2]
+                       + "_ assignment."
+                       )
+            
+        else:
+            shap.force_plot(
+                base_value=explainer_v2_1.expected_value,
+                shap_values=shap_values_local_1.values[0],
+                feature_names=features_list,
+                out_names=v2_binary_dict[prediction_v2_1],
+                matplotlib=True,
+                figsize=(22, 4)
+            )
+            st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
+            st.caption("Features in :red[pink] push the prediction towards a " 
+                       "_Not Resigned_ prediction. :blue[Blue bars] push the prediction"
+                       " towards _Resigned_."
+                       )
+            
     
-    shap_values_local_1 = explainer_v2_1(v2_data)
-    shap_values_local_2 = explainer_v2_2(v2_data)
-    shap_values_local_3 = explainer_v3(v3_data)
-    
-    st.write('V3 SHAP Plot')
-    st_shap(
-        shap.force_plot(base_value=explainer_v3.expected_value[prediction_v3],
+        st.write('V3 SHAP Plot')
+        shap.force_plot(
+            base_value=explainer_v3.expected_value[prediction_v3],
             shap_values=shap_values_local_3.values[0, :, prediction_v3],
             feature_names=features_list,
-            out_names=v3_predict_dict[prediction_v3]
-            ), height=200, width=1000)
-                
-
+            out_names=v3_predict_dict[prediction_v3],
+            matplotlib=True,
+            figsize=(22, 4)
+        )
+        st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
+        st.caption("Features in :red[pink] push the prediction towards the _" + 
+                   v3_predict_dict[prediction_v3] + "_ prediction. :blue[Blue bars] drag the "
+                   "prediction away from the _" + v3_predict_dict[prediction_v3]
+                   + "_ assignment."
+                   )

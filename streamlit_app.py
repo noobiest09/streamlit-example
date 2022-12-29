@@ -128,34 +128,41 @@ def make_predictions():
     prediction_v3 = model_v3.predict(v3_data)[0]
     confidence_v3 = model_v3.predict_proba(v3_data)[0].max()
     
-    # V2 Output
-    st.success('V2 Model:' +
-               '  \n--------------' +
-               '  \nPrediction: ' + v2_predict_dict[prediction_v2] +
-               '  \nBinary Confidence: ' + str(round(confidence_v2_1*100, 1)) +
-               '%' + ('' if prediction_v2_1 else '  \nBinned Confidence: ' +
-                      str(round(confidence_v2_2*100, 1)) + '%'))
+    v21, v22 = st.columns(2)
     
-    if not(prediction_v2_1):
-        st.text('Categorical Probabilities')    
-        st.dataframe(pd.DataFrame(
-            model_v2_2.predict_proba(v2_data),
-            columns=v2_predict_dict.values()[1:]).applymap(
-                lambda x: str(round(100*x, 2)) +'%')
-            )
+    with v21:
+        # V2 Output
+        st.success('V2 Model:' +
+                   '  \n--------------' +
+                   '  \nPrediction: ' + v2_predict_dict[prediction_v2] +
+                   '  \nBinary Confidence: ' + str(round(confidence_v2_1*100, 1)) +
+                   '%' + ('' if prediction_v2_1 else '  \nBinned Confidence: ' +
+                          str(round(confidence_v2_2*100, 1)) + '%'))
+        
+    with v22:    
+        if not(prediction_v2_1):
+            st.text('Categorical Probabilities')    
+            st.dataframe(pd.DataFrame(
+                model_v2_2.predict_proba(v2_data),
+                columns=v2_predict_dict.values()[1:]).applymap(
+                    lambda x: str(round(100*x, 2)) +'%')
+                )
     
+    v31, v32 = st.columns(2)
     
+    with v31:
     # V3 Output
-    st.success('V3 Model:' +
-               '  \n--------------'
-               '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
-               '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
+        st.success('V3 Model:' +
+                   '  \n--------------'
+                   '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
+                   '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
     
-    st.text('Categorical Probabilities')    
-    st.dataframe(pd.DataFrame(model_v3.predict_proba(v3_data),
-                              columns=v3_predict_dict.values()
-                              ).applymap(lambda x: str(round(100*x, 2)) +'%')
-                 )
+    with v32:
+        st.text('Categorical Probabilities')    
+        st.dataframe(pd.DataFrame(model_v3.predict_proba(v3_data),
+                                  columns=v3_predict_dict.values()
+                                  ).applymap(lambda x: str(round(100*x, 2)) +'%')
+                     )
 
 # Load Models
 model_v3 = load_model("v3_model.json")

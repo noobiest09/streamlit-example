@@ -15,9 +15,7 @@ import streamlit as st
 # from streamlit_shap import st_shap
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
-"""
-Resignation Model V2 & V3 With SHAP Explanation
-"""
+st.title('Resignation Model V2 & V3 With SHAP Explanation')
 
 # categorical options
 job_classes = sorted(['Finance', 'Rank & File', 'BPO', 'Analyst', 'C-suite',
@@ -78,29 +76,6 @@ v2_binary_dict = {
            }
 
 
-# Input Data
-df = pd.DataFrame()
-
-c1, c2 = st.columns(2)
-
-with c1:
-    df.loc[0, 'Gender'] = st.selectbox(label='Gender',
-                                       options=['Male', 'Female'],
-                                       index=1
-                                       )
-    df.loc[0, 'Employment Status'] = st.selectbox(label='Employment Status',
-                                                  options=employment_stats
-                                                  )
-    df.loc[0, 'Job Class'] = st.selectbox(label='Job Class',
-                                          options=job_classes)
-with c2:
-    df.loc[0, 'Age'] = st.number_input(label='Age', min_value=0, max_value=100,
-                                       value=30)
-    df.loc[0, 'Tenure'] = st.number_input(label='Tenure', min_value=0,
-                                   max_value=100, value=5)
-    df.loc[0, 'Salary'] = st.number_input(label='Salary', min_value=0,
-                                          max_value=100000, value=25000)
-
 # Create item for prediction
 def process_data(df):
     df = pd.get_dummies(df,columns=['Gender', 'Job Class',
@@ -113,6 +88,37 @@ def process_data(df):
     X_log[log_cols] = X_log[log_cols].apply(lambda x: np.log(x+1))
     return X, X_log
 
+
+# Input Data
+df = pd.DataFrame()
+
+c1, c2 = st.columns(2)
+
+with c1:
+    df.loc[0, 'Gender'] = st.selectbox(label='Gender',
+                                       options=['Male', 'Female'],
+                                       index=1
+                                       )
+    df.loc[0, 'Job Class'] = st.selectbox(label='Job Class',
+                                          options=job_classes)
+    df.loc[0, 'Employment Status'] = st.selectbox(label='Employment Status',
+                                                  options=employment_stats
+                                                  )
+    
+with c2:
+    df.loc[0, 'Salary'] = st.number_input(label='Salary',
+                                          min_value=0.00,
+                                          value=25000.00,
+                                          step=1e-2)
+    df.loc[0, 'Tenure (years)'] = st.number_input(label='Tenure',
+                                          min_value=0.00,
+                                          max_value=100.00,
+                                          value=5.00, step=1e-2)
+    df.loc[0, 'Age'] = st.number_input(label='Age',
+                                       min_value=0,
+                                       max_value=100,
+                                       value=30)
+    
 
 # Load Models
 model_v3 = XGBClassifier()
@@ -131,6 +137,8 @@ if st.session_state.get('button') != True:
 
 if st.session_state['button'] == True:
     v2_data, v3_data = process_data(df)
+    v2_data = v2_data[features_list]
+    v3_data = v3_data[features_list]
     
     # V2 Output
     prediction_v2_1 = model_v2_1.predict(v2_data)[0]
@@ -142,7 +150,7 @@ if st.session_state['button'] == True:
                '  \n--------------' +
                '  \nPrediction: ' + v2_predict_dict[prediction_v2] +
                '  \nBinary Confidence: ' + str(round(confidence_v2_1*100, 1)) +
-               '%' + ('' if prediction_v2_1 else '  \nBinned Probability: ' +
+               '%' + ('' if prediction_v2_1 else '  \nBinned Confidence: ' +
                       str(round(confidence_v2_2*100, 1)) + '%'))
     
     # V3 Output
@@ -185,10 +193,10 @@ if st.session_state['button'] == True:
                 figsize=(22, 4)
             )
             st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-            st.caption("Features in pink push the prediction towards the _" + 
-                       v2_binary_dict[prediction_v2_2] + "_ prediction. Blue bars drag the "
-                       "prediction away from the _" + v2_predict_dict[prediction_v2_2]
-                       + "_ assignment."
+            st.caption("Features in :red[pink] push the prediction towards the _" + 
+                       v2_binary_dict[prediction_v2_1] + "_ prediction. :blue[Blue bars] drag the "
+                       "prediction away from the ___" + v2_predict_dict[prediction_v2_2]
+                       + "___ assignment."
                        )
             
         else:
@@ -202,8 +210,8 @@ if st.session_state['button'] == True:
             )
             st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
             st.caption("Features in :red[pink] push the prediction towards a " 
-                       "_Not Resigned_ prediction. :blue[Blue bars] push the prediction"
-                       " towards _Resigned_."
+                       "___Not Resigned___ prediction. :blue[Blue bars] push the prediction"
+                       " towards ___Resigned___."
                        )
             
     

@@ -214,7 +214,8 @@ with st.form("my_form"):
                     0, :, prediction_v2_2 - 1],
                 feature_names=feature_names,
                 out_names=v2_predict_dict[prediction_v2_2],
-                figsize=(22, 4)
+                figsize=(22, 4),
+                matplotlib=True
             )
             st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
             st.caption("Features in pink push the prediction towards the _" + 
@@ -229,7 +230,8 @@ with st.form("my_form"):
                 shap_values=shap_values_local_1.values[0],
                 feature_names=feature_names,
                 out_names=v2_binary_dict[prediction_v2_1],
-                figsize=(22, 4)
+                figsize=(22, 4),
+                matplotlib=True
             )
             st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
             st.caption("Features in :red[pink] push the prediction towards a " 
@@ -244,7 +246,8 @@ with st.form("my_form"):
             shap_values=shap_values_local_3.values[0, :, prediction_v3],
             feature_names=feature_names,
             out_names=v3_predict_dict[prediction_v3],
-            figsize=(22, 4)
+            figsize=(22, 4),
+            matplotlib=True
         )
         st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
         st.caption("Features in :red[pink] push the prediction towards the _" + 

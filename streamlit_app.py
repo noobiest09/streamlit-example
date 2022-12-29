@@ -145,7 +145,7 @@ def make_predictions(with_shap=False):
                       str(round(confidence_v2_2*100, 1)) + '%'))
       
     if not(prediction_v2_1):
-        st.text('V2 Probabilities')    
+        st.write('V2 Probabilities')    
         st.dataframe(pd.DataFrame(
             model_v2_2.predict_proba(v2_data),
             columns=v2_predict_dict.values()[1:]).applymap(
@@ -193,7 +193,7 @@ def make_predictions(with_shap=False):
                '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
                '  \nProbability: ' + str(round(confidence_v3*100, 1)) + '%')
 
-    st.text('V3 Probabilities')    
+    st.write('V3 Probabilities')    
     st.dataframe(pd.DataFrame(model_v3.predict_proba(v3_data),
                               columns=v3_predict_dict.values()
                               ).applymap(lambda x: str(round(100*x, 2)) +'%')

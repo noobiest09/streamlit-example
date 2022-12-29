@@ -17,7 +17,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # Caching methods for memory management
 
-@st.cache(hash_funcs={'xgboost.XGBClassifier': id})
+@st.cache(allow_output_mutation=True)
 def load_model(file_path):
     
     # Load Models

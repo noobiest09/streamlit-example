@@ -108,7 +108,7 @@ def process_data(df):
     return X, X_log
 
 
-def make_predictions():
+def make_predictions(with_shap=False):
     """Make predictions using loaded models and show output."""
 
     global v2_data, v3_data
@@ -128,6 +128,14 @@ def make_predictions():
     prediction_v3 = model_v3.predict(v3_data)[0]
     confidence_v3 = model_v3.predict_proba(v3_data)[0].max()
     
+    # Prettify feature display
+    feature_names = [name.replace('_', '\n') for name in features_list]
+    
+    # Calculate local SHAP values
+    shap_values_local_1 = explainer_v2_1(v2_data)
+    shap_values_local_2 = explainer_v2_2(v2_data)
+    shap_values_local_3 = explainer_v3(v3_data)
+    
     # V2 Output
     st.success('V2 Model:' +
                '  \n--------------' +
@@ -143,18 +151,71 @@ def make_predictions():
             columns=v2_predict_dict.values()[1:]).applymap(
                 lambda x: str(round(100*x, 2)) +'%')
             )
+                
+    # V2 SHAP
+    if with_shap:
+        st.write('V2 SHAP Plot')
+        if prediction_v2_1 == 0:
+            shap.force_plot(
+                base_value=explainer_v2_2.expected_value[
+                    prediction_v2_2 - 1],
+                shap_values=shap_values_local_2.values[
+                    0, :, prediction_v2_2 - 1],
+                feature_names=feature_names,
+                out_names=v2_predict_dict[prediction_v2_2],
+                figsize=(22, 4),
+                matplotlib=True
+            )
+            st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
+            st.caption("Features in pink push the prediction towards the _" + 
+                       v2_binary_dict[prediction_v2_1] + "_ prediction. Blue bars drag the "
+                       "prediction away from the _" + v2_predict_dict[prediction_v2_2]
+                       + "_ assignment."
+                       )
+        else:
+            shap.force_plot(
+                base_value=explainer_v2_1.expected_value,
+                shap_values=shap_values_local_1.values[0],
+                feature_names=feature_names,
+                out_names=v2_binary_dict[prediction_v2_1],
+                figsize=(22, 4),
+                matplotlib=True
+            )
+            st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
+            st.caption("Features in :red[pink] push the prediction towards a " 
+                       "_Not Resigned_ prediction. :blue[Blue bars] push the prediction"
+                       " towards _Resigned_."
+                       )
 
     # V3 Output
     st.success('V3 Model:' +
                '  \n--------------'
                '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
-               '  \Probability: ' + str(round(confidence_v3*100, 1)) + '%')
+               '  \nProbability: ' + str(round(confidence_v3*100, 1)) + '%')
 
     st.text('V3 Probabilities')    
     st.dataframe(pd.DataFrame(model_v3.predict_proba(v3_data),
                               columns=v3_predict_dict.values()
                               ).applymap(lambda x: str(round(100*x, 2)) +'%')
                  )
+    
+    # V3 SHAP
+    if with_shap:
+        st.write('V3 SHAP Plot')
+        shap.force_plot(
+            base_value=explainer_v3.expected_value[prediction_v3],
+            shap_values=shap_values_local_3.values[0, :, prediction_v3],
+            feature_names=feature_names,
+            out_names=v3_predict_dict[prediction_v3],
+            figsize=(22, 4),
+            matplotlib=True
+        )
+        st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
+        st.caption("Features in :red[pink] push the prediction towards the _" + 
+                   v3_predict_dict[prediction_v3] + "_ prediction. :blue[Blue bars] drag the "
+                   "prediction away from the _" + v3_predict_dict[prediction_v3]
+                   + "_ assignment."
+                   )
 
 # Load Models
 model_v3 = load_model("v3_model.json")
@@ -203,69 +264,9 @@ with st.form("my_form"):
     
     if submitted1: # Predict Only
         # Make predictions
-        make_predictions()
+        make_predictions(with_shap=False)
         
         
     if submitted2: # Predict & Plot SHAP
-        
         # Make predictions
-        make_predictions()
-        
-        # Prettify feature display
-        feature_names = [name.replace('_', '\n') for name in features_list]
-        
-        # Calculate local SHAP values
-        shap_values_local_1 = explainer_v2_1(v2_data)
-        shap_values_local_2 = explainer_v2_2(v2_data)
-        shap_values_local_3 = explainer_v3(v3_data)
-        
-        st.write('V2 SHAP Plot')
-        if prediction_v2_1 == 0:
-            shap.force_plot(
-                base_value=explainer_v2_2.expected_value[
-                    prediction_v2_2 - 1],
-                shap_values=shap_values_local_2.values[
-                    0, :, prediction_v2_2 - 1],
-                feature_names=feature_names,
-                out_names=v2_predict_dict[prediction_v2_2],
-                figsize=(22, 4),
-                matplotlib=True
-            )
-            st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-            st.caption("Features in pink push the prediction towards the _" + 
-                       v2_binary_dict[prediction_v2_1] + "_ prediction. Blue bars drag the "
-                       "prediction away from the _" + v2_predict_dict[prediction_v2_2]
-                       + "_ assignment."
-                       )
-            
-        else:
-            shap.force_plot(
-                base_value=explainer_v2_1.expected_value,
-                shap_values=shap_values_local_1.values[0],
-                feature_names=feature_names,
-                out_names=v2_binary_dict[prediction_v2_1],
-                figsize=(22, 4),
-                matplotlib=True
-            )
-            st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-            st.caption("Features in :red[pink] push the prediction towards a " 
-                       "_Not Resigned_ prediction. :blue[Blue bars] push the prediction"
-                       " towards _Resigned_."
-                       )
-            
-    
-        st.write('V3 SHAP Plot')
-        shap.force_plot(
-            base_value=explainer_v3.expected_value[prediction_v3],
-            shap_values=shap_values_local_3.values[0, :, prediction_v3],
-            feature_names=feature_names,
-            out_names=v3_predict_dict[prediction_v3],
-            figsize=(22, 4),
-            matplotlib=True
-        )
-        st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-        st.caption("Features in :red[pink] push the prediction towards the _" + 
-                   v3_predict_dict[prediction_v3] + "_ prediction. :blue[Blue bars] drag the "
-                   "prediction away from the _" + v3_predict_dict[prediction_v3]
-                   + "_ assignment."
-                   )
+        make_predictions(with_shap=True)

@@ -17,7 +17,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # Caching methods for memory management
 
-@st.cache(ttl=24*3600)
+@st.cache()
 def load_models():
     
     # Load Models

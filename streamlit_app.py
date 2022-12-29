@@ -138,9 +138,11 @@ def make_predictions():
     
     if not(prediction_v2_1):
         st.text('Categorical Probabilities')    
-        st.dataframe(pd.DataFrame(model_v2_2.predict_proba(v2_data),
-                                  columns=v2_predict_dict.values()[1:]
-                                  ))
+        st.dataframe(pd.DataFrame(
+            model_v2_2.predict_proba(v2_data),
+            columns=v2_predict_dict.values()[1:]).applymap(
+                lambda x: str(round(100*x, 2)) +'%')
+            )
     
     
     # V3 Output
@@ -152,7 +154,8 @@ def make_predictions():
     st.text('Categorical Probabilities')    
     st.dataframe(pd.DataFrame(model_v3.predict_proba(v3_data),
                               columns=v3_predict_dict.values()
-                              ))
+                              ).applymap(lambda x: str(round(100*x, 2)) +'%')
+                 )
 
 # Load Models
 model_v3 = load_model("v3_model.json")

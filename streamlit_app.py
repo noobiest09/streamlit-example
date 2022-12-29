@@ -19,6 +19,8 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 @st.cache(ttl=24*3600)
 def load_models():
+    
+    # Load Models
     model_v3 = XGBClassifier()
     model_v2_1 = XGBClassifier()
     model_v2_2 = XGBClassifier()
@@ -26,17 +28,16 @@ def load_models():
     model_v2_1.load_model("xgb_model_v2_1.json")
     model_v2_2.load_model("xgb_model_v2_2.json")
     
-    return model_v2_1, model_v2_2, model_v3
-
-@st.cache(ttl=24*3600)
-def load_explainers():
+    # Load Explainers
     with lzma.open('explainer_v2_1.xz', 'rb') as f:
         explainer_v2_1 = pickle.load(f)
     with lzma.open('explainer_v2_2.xz', 'rb') as f:
         explainer_v2_2 = pickle.load(f)
     with lzma.open('explainer_v3.xz', 'rb') as f:
         explainer_v3 = pickle.load(f)
-    return explainer_v2_1, explainer_v2_2, explainer_v3
+    
+    return (model_v2_1, model_v2_2, model_v3,
+            explainer_v2_1, explainer_v2_2, explainer_v3)
 
 
 #### START OF APP ####
@@ -149,7 +150,7 @@ def make_predictions():
                '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
 
 # Loading models
-model_v2_1, model_v2_2, model_v3 = load_models()
+model_v2_1, model_v2_2, model_v3, explainer_v2_1, explainer_v2_2, explainer_v3 = load_models()
 
 # Input Data Storage
 df = pd.DataFrame()
@@ -198,9 +199,6 @@ with st.form("my_form"):
         
         # Prettify feature display
         feature_names = [name.replace('_', '\n') for name in features_list]
-
-        # Explainer values
-        explainer_v2_1, explainer_v2_2, explainer_v3 = load_explainers()
         
         # Calculate local SHAP values
         shap_values_local_1 = explainer_v2_1(v2_data)
@@ -216,7 +214,6 @@ with st.form("my_form"):
                     0, :, prediction_v2_2 - 1],
                 feature_names=feature_names,
                 out_names=v2_predict_dict[prediction_v2_2],
-                matplotlib=True,
                 figsize=(22, 4)
             )
             st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
@@ -232,7 +229,6 @@ with st.form("my_form"):
                 shap_values=shap_values_local_1.values[0],
                 feature_names=feature_names,
                 out_names=v2_binary_dict[prediction_v2_1],
-                matplotlib=True,
                 figsize=(22, 4)
             )
             st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
@@ -248,7 +244,6 @@ with st.form("my_form"):
             shap_values=shap_values_local_3.values[0, :, prediction_v3],
             feature_names=feature_names,
             out_names=v3_predict_dict[prediction_v3],
-            matplotlib=True,
             figsize=(22, 4)
         )
         st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)

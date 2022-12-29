@@ -12,12 +12,37 @@ from xgboost import XGBClassifier
 
 # GUI
 import streamlit as st
-# from streamlit_shap import st_shap
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
+
+# Caching methods for memory management
+
+@st.cache(ttl=24*3600)
+def load_models():
+    model_v3 = XGBClassifier()
+    model_v2_1 = XGBClassifier()
+    model_v2_2 = XGBClassifier()
+    model_v3.load_model("v3_model.json")
+    model_v2_1.load_model("xgb_model_v2_1.json")
+    model_v2_2.load_model("xgb_model_v2_2.json")
+    
+    return model_v2_1, model_v2_2, model_v3
+
+@st.cache(ttl=24*3600)
+def load_explainers():
+    with lzma.open('explainer_v2_1.xz', 'rb') as f:
+        explainer_v2_1 = pickle.load(f)
+    with lzma.open('explainer_v2_2.xz', 'rb') as f:
+        explainer_v2_2 = pickle.load(f)
+    with lzma.open('explainer_v3.xz', 'rb') as f:
+        explainer_v3 = pickle.load(f)
+    return explainer_v2_1, explainer_v2_2, explainer_v3
+
+
+#### START OF APP ####
 st.title('Resignation Model V2 & V3 With SHAP Explanation')
 
-# categorical options
+# Categorical options
 job_classes = sorted(['Finance', 'Rank & File', 'BPO', 'Analyst', 'C-suite',
        'Information Technology', 'Managerial', 'Specialist', 'Supervisor',
        'Director', 'Team Leader', 'Head', 'Education', 'Human Resource',
@@ -90,48 +115,46 @@ def process_data(df):
 
 
 def make_predictions():
-        model_v3 = XGBClassifier()
-        model_v2_1 = XGBClassifier()
-        model_v2_2 = XGBClassifier()
-        model_v3.load_model("v3_model.json")
-        model_v2_1.load_model("xgb_model_v2_1.json")
-        model_v2_2.load_model("xgb_model_v2_2.json")
+    """Make predictions using loaded models and show output."""
 
-        global v2_data, v3_data
-        global prediction_v2_1, prediction_v2_2, prediction_v2, prediction_v3
-        global confidence_v2_1, confidence_v2_2, confidence_v3
+    global v2_data, v3_data
+    global prediction_v2_1, prediction_v2_2, prediction_v2, prediction_v3
+    global confidence_v2_1, confidence_v2_2, confidence_v3
 
-        v2_data, v3_data = process_data(df)
-        v2_data = v2_data[features_list]
-        v3_data = v3_data[features_list]
-        
-        # V2 Output
-        prediction_v2_1 = model_v2_1.predict(v2_data)[0]
-        prediction_v2_2 = model_v2_2.predict(v2_data)[0]
-        prediction_v2 = (1 - prediction_v2_1) * prediction_v2_2
-        confidence_v2_1 = model_v2_1.predict_proba(v2_data)[0].max()
-        confidence_v2_2 = model_v2_2.predict_proba(v2_data)[0].max()
-        prediction_v3 = model_v3.predict(v3_data)[0]
-        confidence_v3 = model_v3.predict_proba(v3_data)[0].max()
-        
-        # V2 Output
-        st.success('V2 Model:' +
-                   '  \n--------------' +
-                   '  \nPrediction: ' + v2_predict_dict[prediction_v2] +
-                   '  \nBinary Confidence: ' + str(round(confidence_v2_1*100, 1)) +
-                   '%' + ('' if prediction_v2_1 else '  \nBinned Confidence: ' +
-                          str(round(confidence_v2_2*100, 1)) + '%'))
-        
-        # V3 Output
-        st.success('V3 Model:' +
-                   '  \n--------------'
-                   '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
-                   '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
+    v2_data, v3_data = process_data(df)
+    v2_data = v2_data[features_list]
+    v3_data = v3_data[features_list]
+    
+    # Run Models
+    prediction_v2_1 = model_v2_1.predict(v2_data)[0]
+    prediction_v2_2 = model_v2_2.predict(v2_data)[0]
+    prediction_v2 = (1 - prediction_v2_1) * prediction_v2_2
+    confidence_v2_1 = model_v2_1.predict_proba(v2_data)[0].max()
+    confidence_v2_2 = model_v2_2.predict_proba(v2_data)[0].max()
+    prediction_v3 = model_v3.predict(v3_data)[0]
+    confidence_v3 = model_v3.predict_proba(v3_data)[0].max()
+    
+    # V2 Output
+    st.success('V2 Model:' +
+               '  \n--------------' +
+               '  \nPrediction: ' + v2_predict_dict[prediction_v2] +
+               '  \nBinary Confidence: ' + str(round(confidence_v2_1*100, 1)) +
+               '%' + ('' if prediction_v2_1 else '  \nBinned Confidence: ' +
+                      str(round(confidence_v2_2*100, 1)) + '%'))
+    
+    # V3 Output
+    st.success('V3 Model:' +
+               '  \n--------------'
+               '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
+               '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
 
+# Loading models
+model_v2_1, model_v2_2, model_v3 = load_models()
 
-# Input Data
+# Input Data Storage
 df = pd.DataFrame()
 
+# Start of input form
 with st.form("my_form"):
     c1, c2 = st.columns(2)
     
@@ -173,17 +196,13 @@ with st.form("my_form"):
         # Make predictions
         make_predictions()
         
+        # Prettify feature display
         feature_names = [name.replace('_', '\n') for name in features_list]
 
         # Explainer values
-        with lzma.open('explainer_v2_1.xz', 'rb') as f:
-            explainer_v2_1 = pickle.load(f)
-        with lzma.open('explainer_v2_2.xz', 'rb') as f:
-            explainer_v2_2 = pickle.load(f)
-        with lzma.open('explainer_v3.xz', 'rb') as f:
-            explainer_v3 = pickle.load(f)
+        explainer_v2_1, explainer_v2_2, explainer_v3 = load_explainers()
         
-
+        # Calculate local SHAP values
         shap_values_local_1 = explainer_v2_1(v2_data)
         shap_values_local_2 = explainer_v2_2(v2_data)
         shap_values_local_3 = explainer_v3(v3_data)

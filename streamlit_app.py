@@ -136,11 +136,23 @@ def make_predictions():
                '%' + ('' if prediction_v2_1 else '  \nBinned Confidence: ' +
                       str(round(confidence_v2_2*100, 1)) + '%'))
     
+    if not(prediction_v2_1):
+        st.text('Categorical Probabilities')    
+        st.dataframe(pd.DataFrame(model_v2_2.predict_proba(v2_data),
+                                  columns=v2_predict_dict.values()[1:]
+                                  ))
+    
+    
     # V3 Output
     st.success('V3 Model:' +
                '  \n--------------'
                '  \nPrediction: ' + v3_predict_dict[prediction_v3] +
                '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
+    
+    st.text('Categorical Probabilities')    
+    st.dataframe(pd.DataFrame(model_v3.predict_proba(v3_data),
+                              columns=v3_predict_dict.values()
+                              ))
 
 # Load Models
 model_v3 = load_model("v3_model.json")

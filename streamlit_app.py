@@ -17,7 +17,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # Caching methods for memory management
 
-@st.cache()
+
 def load_models():
     
     # Load Models
@@ -29,7 +29,8 @@ def load_models():
     model_v2_2.load_model("xgb_model_v2_2.json")
     
     return model_v2_1, model_v2_2, model_v3
-    
+
+@st.cache()
 def load_explainers():
     
     # Load Explainers

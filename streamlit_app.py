@@ -28,6 +28,10 @@ def load_models():
     model_v2_1.load_model("xgb_model_v2_1.json")
     model_v2_2.load_model("xgb_model_v2_2.json")
     
+    return model_v2_1, model_v2_2, model_v3
+    
+def load_explainers():
+    
     # Load Explainers
     with lzma.open('explainer_v2_1.xz', 'rb') as f:
         explainer_v2_1 = pickle.load(f)
@@ -36,8 +40,7 @@ def load_models():
     with lzma.open('explainer_v3.xz', 'rb') as f:
         explainer_v3 = pickle.load(f)
     
-    return (model_v2_1, model_v2_2, model_v3,
-            explainer_v2_1, explainer_v2_2, explainer_v3)
+    return explainer_v2_1, explainer_v2_2, explainer_v3
 
 
 #### START OF APP ####
@@ -150,7 +153,8 @@ def make_predictions():
                '  \nConfidence: ' + str(round(confidence_v3*100, 1)) + '%')
 
 # Loading models
-model_v2_1, model_v2_2, model_v3, explainer_v2_1, explainer_v2_2, explainer_v3 = load_models()
+model_v2_1, model_v2_2, model_v3 = load_models()
+explainer_v2_1, explainer_v2_2, explainer_v3 = load_explainers()
 
 # Input Data Storage
 df = pd.DataFrame()

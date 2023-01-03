@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import shap
 
-# File Management
+# File I/O
 import lzma
 import pickle
 
@@ -148,7 +148,9 @@ def make_predictions(with_shap=False):
         st.markdown('**V2 Probabilities**')   
         st.dataframe(pd.DataFrame(
             model_v2_2.predict_proba(v2_data),
-            columns=v2_predict_dict.values()[1:]).applymap(
+            columns=list(v2_predict_dict.values())[1:],
+            index=['Probabilities']
+            ).applymap(
                 lambda x: str(round(100*x, 2)) +'%')
             )
                 
@@ -195,7 +197,8 @@ def make_predictions(with_shap=False):
 
     st.markdown('**V3 Probabilities**') 
     st.dataframe(pd.DataFrame(model_v3.predict_proba(v3_data),
-                              columns=v3_predict_dict.values()
+                              columns=v3_predict_dict.values(),
+                              index=['Probabilities']
                               ).applymap(lambda x: str(round(100*x, 2)) +'%')
                  )
     

@@ -169,8 +169,8 @@ def make_predictions(with_shap=False):
                 matplotlib=True
             )
             st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-            st.caption("Features in pink push the prediction towards the _" + 
-                       v2_binary_dict[prediction_v2_1] + "_ prediction. Blue bars drag the "
+            st.caption("Features in :red[pink] push the prediction towards the _" + 
+                       v2_predict_dict[prediction_v2_2] + "_ prediction. :blue[Blue bars] drag the "
                        "prediction away from the _" + v2_predict_dict[prediction_v2_2]
                        + "_ assignment."
                        )

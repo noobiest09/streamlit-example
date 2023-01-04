@@ -225,7 +225,7 @@ def make_predictions(with_shap=0):
                        )
 
             if with_shap==2:
-                st.markdown('**Global SHAP Plot**')
+                st.markdown('**Global SHAP Plot for ' + v2_predict_dict[prediction_v2_2] + '**')
                 plot_beeswarm(
                     shap_values_local_2[:, :, prediction_v2_2 - 1],
                     shap_values_global_2[:, :, prediction_v2_2 - 1])
@@ -246,7 +246,7 @@ def make_predictions(with_shap=0):
                        )
 
             if with_shap==2:
-                st.markdown('**Global SHAP Plot**')
+                st.markdown('**Global SHAP Plot for Not Resigned**')
                 plot_beeswarm(shap_values_local_1, shap_values_global_1)
 
     # V3 Output
@@ -281,7 +281,7 @@ def make_predictions(with_shap=0):
                    )
 
         if with_shap==2:
-            st.markdown('**Global SHAP Plot**')
+            st.markdown('**Global SHAP Plot for ' + v3_predict_dict[prediction_v3] + '**')
             plot_beeswarm(
                 shap_values_local_3[:, :, prediction_v3],
                 shap_values_global_3[:, :, prediction_v3])

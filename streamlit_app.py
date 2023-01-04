@@ -145,6 +145,7 @@ def plot_beeswarm(shap_values_local, shap_values_global):
     shap.plots.beeswarm(
         local_shap_beeswarm(shap_values_local, shap_values_global),
         show=False, max_display=30,
+        order=np.argsort(shap_values_global.abs.mean(0).values)[::-1],
         alpha=[0, 0, 1], color_bar_label='Local Feature Values')
 
     st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)

@@ -2,6 +2,8 @@
 import numpy as np
 import pandas as pd
 import shap
+import matplotlib.pyplot as plt
+from copy import deepcopy
 
 # File I/O
 import lzma
@@ -26,11 +28,18 @@ def load_model(file_path):
     return model
 
 @st.cache(allow_output_mutation=True)
-def load_explainer(file_path):
+def load_xz(file_path):
     # Load Explainers
     with lzma.open(file_path, 'rb') as f:
-        explainer = pickle.load(f)
-    return explainer
+        xz_object = pickle.load(f)
+    return xz_object
+
+@st.cache(allow_output_mutation=False)
+def load_xz_non_mutable(file_path):
+    # Load Explainers
+    with lzma.open(file_path, 'rb') as f:
+        xz_object = pickle.load(f)
+    return xz_object
 
 
 #### START OF APP ####
@@ -97,6 +106,10 @@ v2_binary_dict = {
 
 # Create item for prediction
 def process_data(df):
+    """
+    Get dummies for categorical columns and apply log transform to
+    numerical features.
+    """
     df = pd.get_dummies(df,columns=['Gender', 'Job Class',
                                     'Employment Status'])
     
@@ -107,9 +120,45 @@ def process_data(df):
     X_log[log_cols] = X_log[log_cols].apply(lambda x: np.log(x+1))
     return X, X_log
 
+def local_shap_beeswarm(shap_values_local, shap_values_global):
+    """Creates local shap values to align with a global one in plotting."""
+    shap_values_temp = deepcopy(shap_values_global)
+    shap_values_temp.values = np.array(
+        [shap_values_global.values.min(axis=0),
+         shap_values_global.values.max(axis=0),
+         shap_values_local.values[0]])
+    shap_values_temp.data = np.array(
+        [shap_values_global.data.min(axis=0),
+         shap_values_global.data.max(axis=0),
+         shap_values_local.data[0]])
+    shap_values_temp.base_values = np.array(
+        np.repeat(shap_values_global.base_values.min(axis=0), 3))
+    return shap_values_temp
 
-def make_predictions(with_shap=False):
-    """Make predictions using loaded models and show output."""
+def plot_beeswarm(shap_values_local, shap_values_global):
+    """Create SHAP beeswarm plot with local point highlighted."""
+    shap.plots.beeswarm(
+        shap_values_global, show=False, max_display=30, alpha=0.1,
+        color=plt.get_cmap('Wistia'),
+        color_bar_label='Global Feature Values')
+
+    shap.plots.beeswarm(
+        local_shap_beeswarm(shap_values_local, shap_values_global),
+        show=False, max_display=30,
+        alpha=[0, 0, 1], color_bar_label='Local Feature Values')
+
+    st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
+
+
+def make_predictions(with_shap=0):
+    """
+    Make predictions using models and show output.
+
+    Parameters
+    ----------
+    with_shap : int
+        0 for no SHAP Plots, 1 for Local SHAP plots, 2 for Local & Global SHAP Plots
+    """
 
     global v2_data, v3_data
     global prediction_v2_1, prediction_v2_2, prediction_v2, prediction_v3
@@ -156,7 +205,7 @@ def make_predictions(with_shap=False):
                 
     # V2 SHAP
     if with_shap:
-        st.markdown('**V2 SHAP Plot**')
+        st.markdown('**Local SHAP Plot**')
         if prediction_v2_1 == 0:
             shap.force_plot(
                 base_value=explainer_v2_2.expected_value[
@@ -169,11 +218,18 @@ def make_predictions(with_shap=False):
                 matplotlib=True
             )
             st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-            st.caption("Features in :red[pink] push the prediction towards the _" + 
+            st.caption(":red[Pink bars] push the prediction towards the _" + 
                        v2_predict_dict[prediction_v2_2] + "_ prediction. :blue[Blue bars] drag the "
                        "prediction away from the _" + v2_predict_dict[prediction_v2_2]
                        + "_ assignment."
                        )
+
+            if with_shap==2:
+                st.markdown('**Global SHAP Plot**')
+                plot_beeswarm(
+                    shap_values_local_2[:, :, prediction_v2_2 - 1],
+                    shap_values_global_2[:, :, prediction_v2_2 - 1])
+
         else:
             shap.force_plot(
                 base_value=explainer_v2_1.expected_value,
@@ -184,10 +240,14 @@ def make_predictions(with_shap=False):
                 matplotlib=True
             )
             st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-            st.caption("Features in :red[pink] push the prediction towards a " 
-                       "_Not Resigned_ prediction. :blue[Blue bars] push the prediction"
+            st.caption(":red[Pink bars] push the prediction towards " 
+                       "_Not Resigned_. :blue[Blue bars] push the prediction"
                        " towards _Resigned_."
                        )
+
+            if with_shap==2:
+                st.markdown('**Global SHAP Plot**')
+                plot_beeswarm(shap_values_local_1, shap_values_global_1)
 
     # V3 Output
     st.success('V3 Model:' +
@@ -204,7 +264,7 @@ def make_predictions(with_shap=False):
     
     # V3 SHAP
     if with_shap:
-        st.markdown('**V3 SHAP Plot**')
+        st.markdown('**Local SHAP Plot**')
         shap.force_plot(
             base_value=explainer_v3.expected_value[prediction_v3],
             shap_values=shap_values_local_3.values[0, :, prediction_v3],
@@ -214,21 +274,32 @@ def make_predictions(with_shap=False):
             matplotlib=True
         )
         st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-        st.caption("Features in :red[pink] push the prediction towards the _" + 
+        st.caption(":red[Pink bars] push the prediction towards the _" + 
                    v3_predict_dict[prediction_v3] + "_ prediction. :blue[Blue bars] drag the "
                    "prediction away from the _" + v3_predict_dict[prediction_v3]
                    + "_ assignment."
                    )
 
+        if with_shap==2:
+            st.markdown('**Global SHAP Plot**')
+            plot_beeswarm(
+                shap_values_local_3[:, :, prediction_v3],
+                shap_values_global_3[:, :, prediction_v3])
+
 # Load Models
-model_v3 = load_model("v3_model.json")
 model_v2_1 = load_model("xgb_model_v2_1.json")
 model_v2_2 = load_model("xgb_model_v2_2.json")
+model_v3 = load_model("v3_model.json")
     
 # Load Explainers
-explainer_v2_1 = load_explainer('explainer_v2_1.xz')
-explainer_v2_2 = load_explainer('explainer_v2_2.xz')
-explainer_v3 = load_explainer('explainer_v3.xz')    
+explainer_v2_1 = load_xz('explainer_v2_1.xz')
+explainer_v2_2 = load_xz('explainer_v2_2.xz')
+explainer_v3 = load_xz('explainer_v3.xz')
+
+# Load Global SHAP VAlues
+shap_values_global_1 = load_xz_non_mutable('shap_values_global_1.xz')
+shap_values_global_2 = load_xz_non_mutable('shap_values_global_2.xz')
+shap_values_global_3 = load_xz_non_mutable('shap_values_global_3.xz')
 
 # Input Data Storage
 df = pd.DataFrame()
@@ -262,14 +333,15 @@ with st.form("my_form"):
                                            max_value=100,
                                            value=30)
     
-    submitted1 = st.form_submit_button('Predict')
-    submitted2 = st.form_submit_button('Predict & Show SHAP Plots')
+    submitted0 = st.form_submit_button('Predict')
+    submitted1 = st.form_submit_button('Predict & Show SHAP Plots (Local)')
+    submitted2 = st.form_submit_button('Predict & Show SHAP Plots (Local & Global)')
     
-    if submitted1: # Predict Only
-        # Make predictions
-        make_predictions(with_shap=False)
+    if submitted0: # Predict Only
+        make_predictions(with_shap=0)
         
-        
-    if submitted2: # Predict & Plot SHAP
-        # Make predictions
-        make_predictions(with_shap=True)
+    if submitted1: # Predict & Plot SHAP (Local)
+        make_predictions(with_shap=1)
+
+    if submitted2: # Predict & Plot SHAP (Local & Global)
+        make_predictions(with_shap=2)

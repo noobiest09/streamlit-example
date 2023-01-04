@@ -142,6 +142,8 @@ def plot_beeswarm(shap_values_local, shap_values_global):
         color=plt.get_cmap('Wistia'),
         color_bar_label='Global Feature Values')
 
+    st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
+
     shap.plots.beeswarm(
         local_shap_beeswarm(shap_values_local, shap_values_global),
         show=False, max_display=30,

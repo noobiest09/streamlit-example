@@ -122,33 +122,79 @@ def process_data(df):
 
 def local_shap_beeswarm(shap_values_local, shap_values_global):
     """Creates local shap values to align with a global one in plotting."""
+
+    # Deep Copy to avoid mutation
     shap_values_temp = deepcopy(shap_values_global)
+    
+    # Getting indices for mix and max feature values
+    min_ind = shap_values_global.data.argmin(axis=0)
+    max_ind = shap_values_global.data.argmax(axis=0)
+
+    # Creation of custom SHAP values for proper color scaling
     shap_values_temp.values = np.array(
-        [shap_values_global.values.min(axis=0),
-         shap_values_global.values.max(axis=0),
-         shap_values_local.values[0]])
+        [
+            [shap_values_global.values[row, col] for col, row in enumerate(min_ind)],
+            [shap_values_global.values[row, col] for col, row in enumerate(max_ind)],
+            shap_values_local.values[0]
+        ])
     shap_values_temp.data = np.array(
-        [shap_values_global.data.min(axis=0),
-         shap_values_global.data.max(axis=0),
-         shap_values_local.data[0]])
+        [
+            shap_values_global.data.min(axis=0),
+            shap_values_global.data.max(axis=0),
+            shap_values_local.data[0]
+        ])
     shap_values_temp.base_values = np.array(
         np.repeat(shap_values_global.base_values.min(axis=0), 3))
     return shap_values_temp
 
+
 def plot_beeswarm(shap_values_local, shap_values_global):
     """Create SHAP beeswarm plot with local point highlighted."""
+    
+    # Copying to avoid mutation
+    shap_values_global = deepcopy(shap_values_global)
+    shap_values_local = deepcopy(shap_values_local)
+    
+    # Prettifying Feature names
+    feature_names_2 = [string.replace('_', ' - ') for string in features_list]
+    shap_values_global.feature_names = feature_names_2
+    shap_values_local.feature_names = feature_names_2
+    
+    # Creation of temporary SHAP Values for plotting
+    temp_shap = local_shap_beeswarm(shap_values_local, shap_values_global)
+    
+    plot_kwargs = {
+        'order': np.argsort(shap_values_local.abs.mean(0).values)[::-1],
+        'plot_size': 0.5,
+        'show': False,
+        'max_display': 30
+    }
+    
     shap.plots.beeswarm(
-        shap_values_global, show=False, max_display=30, alpha=0.1,
-        color=plt.get_cmap('Wistia'),
-        color_bar_label='Global Feature Values')
+        deepcopy(shap_values_global),
+        alpha=0.1,
+        color=plt.get_cmap('YlGn'),
+        color_bar_label='Global Feature Values',
+        **plot_kwargs
+    )
 
-    st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
-
+    # Plotting with min and max data value points for proper color scaling
     shap.plots.beeswarm(
-        local_shap_beeswarm(shap_values_local, shap_values_global),
-        show=False, max_display=30,
-        order=np.argsort(shap_values_global.abs.mean(0).values)[::-1],
-        alpha=[0, 0, 1], color_bar_label='Local Feature Values')
+        deepcopy(temp_shap),
+        color_bar_label='Local Feature Values',
+        **plot_kwargs
+    )
+    
+    # Plot to cover min and max points
+    shap.plots.beeswarm(
+        deepcopy(temp_shap[:-1]),
+        color=plt.get_cmap('YlGn'),
+        color_bar=False,
+        **plot_kwargs
+    )
+    
+    y_pos = np.arange(len(features_list))
+    plt.yticks(y_pos, fontsize=10)
 
     st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
 

@@ -174,14 +174,14 @@ def plot_beeswarm(shap_values_local, shap_values_global):
         deepcopy(shap_values_global),
         alpha=0.1,
         color=plt.get_cmap('YlGn'),
-        color_bar_label='Global Feature Values'
+        color_bar_label='Global Feature Values',
         **plot_kwargs
     )
 
     # Plotting with min and max data value points for proper color scaling
     shap.plots.beeswarm(
         deepcopy(temp_shap),
-        color_bar_label='Local Feature Values'
+        color_bar_label='Local Feature Values',
         **plot_kwargs
     )
     
@@ -189,7 +189,7 @@ def plot_beeswarm(shap_values_local, shap_values_global):
     shap.plots.beeswarm(
         deepcopy(temp_shap[:-1]),
         color=plt.get_cmap('YlGn'),
-        color_bar=False
+        color_bar=False,
         **plot_kwargs
     )
     

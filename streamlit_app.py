@@ -148,7 +148,7 @@ def local_shap_beeswarm(shap_values_local, shap_values_global):
     return shap_values_temp
 
 
-def plot_beeswarm(shap_values_local, shap_values_global, log_scale=False):
+def plot_beeswarm(shap_values_local, shap_values_global):
     """Create SHAP beeswarm plot with local point highlighted."""
     
     # Copying to avoid mutation
@@ -174,16 +174,14 @@ def plot_beeswarm(shap_values_local, shap_values_global, log_scale=False):
         deepcopy(shap_values_global),
         alpha=0.1,
         color=plt.get_cmap('YlGn'),
-        color_bar_label='Global Feature Values',
-        log_scale=log_scale,
+        color_bar_label='Global Feature Values'
         **plot_kwargs
     )
 
     # Plotting with min and max data value points for proper color scaling
     shap.plots.beeswarm(
         deepcopy(temp_shap),
-        color_bar_label='Local Feature Values',
-        log_scale=log_scale,
+        color_bar_label='Local Feature Values'
         **plot_kwargs
     )
     
@@ -191,8 +189,7 @@ def plot_beeswarm(shap_values_local, shap_values_global, log_scale=False):
     shap.plots.beeswarm(
         deepcopy(temp_shap[:-1]),
         color=plt.get_cmap('YlGn'),
-        color_bar=False,
-        log_scale=log_scale,
+        color_bar=False
         **plot_kwargs
     )
     
@@ -285,8 +282,7 @@ def make_predictions(with_shap=0):
                 st.markdown('**Global SHAP Plot for _' + v2_predict_dict[prediction_v2_2] + '_**')
                 plot_beeswarm(
                     shap_values_local_2[:, :, prediction_v2_2 - 1],
-                    shap_values_global_2[:, :, prediction_v2_2 - 1],
-                    log_scale=True
+                    shap_values_global_2[:, :, prediction_v2_2 - 1]
                     )
 
         else:
@@ -306,7 +302,7 @@ def make_predictions(with_shap=0):
 
             if with_shap==2:
                 st.markdown('**Global SHAP Plot for _Not Resigned_**')
-                plot_beeswarm(shap_values_local_1, shap_values_global_1, log_scale=True)
+                plot_beeswarm(shap_values_local_1, shap_values_global_1)
 
     # V3 Output
     st.success('V3 Model:' +

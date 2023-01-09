@@ -236,8 +236,8 @@ def make_predictions(with_shap=0):
 
     # Log Local Features Values for V2 (For better interpretability)
     log_func = lambda x: np.log(x + 1)
-    shap_values_local_1.data[:, -3:] = log_func(shap_values_local_1.data[:, -3:].astype(float))
-    shap_values_local_2.data[:, -3:] = log_func(shap_values_local_2.data[:, -3:].astype(float))
+    shap_values_local_1.data[:, :-3] = log_func(shap_values_local_1.data[:, :-3].astype(float))
+    shap_values_local_2.data[:, :-3] = log_func(shap_values_local_2.data[:, :-3].astype(float))
     
     # V2 Output
     st.success('V2 Model:' +

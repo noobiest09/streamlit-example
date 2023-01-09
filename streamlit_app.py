@@ -236,6 +236,11 @@ def make_predictions(with_shap=0):
     shap_values_local_1 = explainer_v2_1(v2_data)
     shap_values_local_2 = explainer_v2_2(v2_data)
     shap_values_local_3 = explainer_v3(v3_data)
+
+    # Log Local Features Values for V2 (For better interpretability)
+    log_func = lambda x: np.log(x + 1)
+    shap_values_local_1.data[:, -3:] = log_func(shap_values_local_1.data[:, -3:].astype(float))
+    shap_values_local_2.data[:, -3:] = log_func(shap_values_local_2.data[:, -3:].astype(float))
     
     # V2 Output
     st.success('V2 Model:' +
@@ -351,8 +356,8 @@ explainer_v2_2 = load_xz('explainer_v2_2.xz')
 explainer_v3 = load_xz('explainer_v3.xz')
 
 # Load Global SHAP VAlues
-shap_values_global_1 = load_xz_non_mutable('shap_values_global_1.xz')
-shap_values_global_2 = load_xz_non_mutable('shap_values_global_2.xz')
+shap_values_global_1 = load_xz_non_mutable('shap_values_global_1_log.xz')
+shap_values_global_2 = load_xz_non_mutable('shap_values_global_2_log.xz')
 shap_values_global_3 = load_xz_non_mutable('shap_values_global_3.xz')
 
 # Input Data Storage
